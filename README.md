@@ -6,3 +6,4 @@ Portfolio Deep Reinforcement Learning
 * cd PortfolioDRL
 * git submodule init
 * git submodule update --recursive
+* copy data to data folder .\PortfolioDRL\data
