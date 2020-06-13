@@ -1,10 +1,7 @@
 import numpy as np
-from Model import Market,Market_Env,Market
+from Model import Market_Env,FundData
 from Model import profilios_to_csv
 import logging
-
-print(np.array(10))
-exit(0)
 
 a = range(10)
 print(list(a))
@@ -18,9 +15,7 @@ logging.info('test')
 fund_return_src = r'.\data\Monthly_Fund_Return.csv'
 feature_src = r'.\data\Feature.csv'
 fund_map_src =r'.\data\FUND_MAP_SELECTED.csv'
-market =Market(data_src =fund_return_src)
-
-env = Market_Env(feature_src,fund_map_src)
+env = Market_Env(feature_src,fund_map_src,fund_return_src)
 profilios=[]
 for i in range(6):
     inputs = np.random.rand(env.action_dim)
@@ -28,6 +23,6 @@ for i in range(6):
     #print(profilo)
     profilios.append(profilo)
 
-cagr,mdd,transfer_count = market.get_result(profilios,2015,1)
+cagr,mdd,transfer_count = env.fund_data.profilios_return(profilios,2015,1)
 #print (f'cagr:{cagr},mdd:{mdd},transfer_count:{transfer_count}')
 profilios_to_csv(profilios,2012,10,r'.\Temp\test3.csv')

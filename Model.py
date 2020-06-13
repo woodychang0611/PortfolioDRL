@@ -7,6 +7,7 @@ import gym
 import csv
 import matplotlib.pyplot as plt
 import logging
+from random import randint
 
 def next_year(year,month):
     year,month = (year+1,1) if (month ==12) else (year,month+1)
@@ -52,60 +53,74 @@ class FundData:
     def __init__(self,data_src: str):
         self.data = None
         parse_dates = ['DATAYM']
-        self.data=pd.read_csv(data_src,parse_dates=parse_dates)
+        self.data=pd.read_csv(data_src,parse_dates=parse_dates).groupby(['ISINCODE','DATAYM'])
     def get_risk_types(self):
         return self.data['RISKTYPENAME'].unique()
     def get_perofrmence_id(self,risk_type=None):
         src = self.data[self.data['RISKTYPENAME']==risk_type] if (risk_type!=None) else self.data
         return src['ISINCODE'].unique()
-    def get_return(self,isin_code,date):
-        ret = self.data[(self.data.ISINCODE==isin_code)& (self.data.DATAYM ==date)]['RET1M'].values
-        #return 0 for non-existing data
-        return ret[0] if(len(ret)==1 and not np.isnan(ret[0])) else 0
-
-class Market:
-    def __init__(self,data_src):
-        self.fund_data = FundData(data_src = data_src)
-    def get_result(self,portfolios,start_year,start_month):
+    def fund_return(self,isin_code,date):
+        try:
+            #ret = self.data[(self.data.ISINCODE==isin_code)& (self.data.DATAYM ==date)]['RET1M'].values
+            data = self.data.get_group((isin_code,date))
+            ret = data['RET1M'].values
+            #return 0 for non-existing data
+            return ret[0] if(len(ret)==1 and not np.isnan(ret[0])) else 0        
+        except:
+            return 0
+    def profilios_return(self,portfolios,start_year,start_month):
         profits = []
         year,month = start_year,start_month
         for portfolio in portfolios:
             profit =0
             for id, weight in portfolio:
-                ret = self.fund_data.get_return(id,datetime.datetime(year,month,1))
+                ret = self.fund_return(id,datetime.datetime(year,month,1))
                 profit += weight*ret
             year,month = next_year(year,month)
             profits.append(profit)
         profits=np.array(profits)
         transfer_count=0
-        for i in range(1,len(portfolios)):
-            for id,_ in portfolios[i]:
-                if (not id in [item[0] for item in portfolios[i-1]]):
-                    transfer_count+=1
-
         cagr = get_cagr(profits)
         mdd = maxdrawdown(acc_return(profits))        
         return cagr,mdd,transfer_count
 
 class Market_Env():
-    def __init__ (self,feature_src,fund_map_src,equity_limit=0.75,episode_limit=30):
-        self.feature_data = pd.read_csv(feature_src)
-        fund_map_src
+    def __init__ (self,feature_src,fund_map_src,fund_return_src,
+            equity_limit=0.75,episode_limit=30,validation=False):
+        self.fund_data = FundData(fund_return_src)
+        self.feature_data = pd.read_csv(feature_src,parse_dates=['Date'])
+
         self.fund_map = pd.read_csv(fund_map_src)
         self.funds = self.fund_map['ISINCODE'].values
-        self.state_dim =self.feature_data.shape[1]
+        self.state_dim =self.feature_data.shape[1]-1 #skip Date
         self.max_action = 0.5
         self.action_dim = len(self.funds)+1 #one more action for risk off
         self.equity_limit=equity_limit
         self.episode_limit=episode_limit
         logging.info(f'model par: state:{self.state_dim} action:{self.action_dim}')
-    def create_profilio(self,inputs,max_number):
+
+    @property
+    def state(self):
+        date=datetime.datetime(self.year,self.month,1)
+        state = self.feature_data[self.feature_data['Date']==date].to_numpy()[0][1:].astype(float)
+        return state
+    @property
+    def done(self):
+        return True if (self.episode>=self.episode_limit) else False 
+            
+    def create_profilio(self,inputs,max_fund_count=6):
+
         funds = self.funds
         if(len(inputs)!=len(funds)+1):
             logging.warning(f"size of inputs and funds does not match should be {len(funds)+1}")
             return None
-        threshold = inputs[np.argsort(inputs[:-1])[-max_number]]
+        inputs = inputs + 0.5
+        #print(inputs)        
+        threshold = inputs[np.argsort(inputs[:-1])[-max_fund_count]]
+
         weights = [i if i >= threshold else 0 for i in inputs[:-1]]
+        if(sum(weights)==0):
+            print("!!!!!!!!!!!!!!!!!!!!")
         weights = weights/sum(weights)
         weights = self.adjust_weight(weights)
        
@@ -114,7 +129,7 @@ class Market_Env():
             if(not np.isclose(weight,0)):
                 profilio.append((self.funds[batch_id],weight))
         return profilio
-
+  
     def adjust_weight(self,weights):
         #adjust equity to be under equity_limit
         equity_sum = 0
@@ -143,18 +158,25 @@ class Market_Env():
     
     def seed(self,seed):
         pass
-    def reset(self,validation=True):
-        state=0
+    def reset(self,validation=False):
         self.episode=0
-        state = np.zeros(self.state_dim)
-        return state
+        self.start_year, self.start_month = (2014,7) if (validation) else (randint(1998,2011), randint(1,12))
+        self.year,self.month = self.start_year, self.start_month 
+        self.profilios=[]
+        self.score =0
+        return self.state
     def step(self,action):   
-        reward, done=0,False
-        state = np.zeros(self.state_dim)
-        self.episode+=1
-        done = True if (self.episode>=self.episode_limit) else False
-            
-        return state, reward, done
+        reward=0
+        profilio = self.create_profilio(action)
+        self.profilios.append(profilio)
+        old_score = self.score
+        cagr,mdd,_ = self.fund_data.profilios_return(self.profilios,self.start_year,self.start_month)
+        self.score = get_score(cagr,mdd)
+        reward= self.score - old_score
+        if(not self.done):
+            self.episode+=1
+            self.year, self.month = next_year(self.year, self.month)
+        return self.state, reward, self.done
 
 
 
