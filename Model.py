@@ -6,12 +6,12 @@ import datetime
 import gym
 import csv
 import matplotlib.pyplot as plt
+import logging
 
 def next_year(year,month):
     year,month = (year+1,1) if (month ==12) else (year,month+1)
     return (year,month)
-def show_warning(message: str):
-    print(f'\033[91m Warning: {message} \033[0m')   
+  
 def acc_return(profits):
     return (1+profits).cumprod()-1
 def maxdrawdown(x,display=False):
@@ -23,7 +23,6 @@ def maxdrawdown(x,display=False):
         plt.show()
     return (x[e]-x[s])/(1+x[s])
 def get_cagr(profits):
-    print(acc_return(profits))
     return math.pow(1+acc_return(profits)[-1],12.0/len(profits))-1
 
 def profilios_to_csv(profilios,start_year,start_month,file):
@@ -69,7 +68,6 @@ class Market:
             year,month = next_year(year,month)
             profits.append(profit)
         profits=np.array(profits)
-        print(profits)
         transfer_count=0
         for i in range(1,len(portfolios)):
             for id,_ in portfolios[i]:
@@ -90,11 +88,11 @@ class Market_Env():
         self.max_action = 0.5
         self.action_dim = len(self.funds)
         self.equity_limit=equity_limit
-        print(f'model par: {self.state_dim} {self.action_dim}')
+        logging.info(f'model par: {self.state_dim} {self.action_dim}')
     def create_profilio(self,inputs,max_number):
         funds = self.funds
         if(len(inputs)!=len(funds)):
-            print(f"size of inputs and funds does not match should be {len(funds)}")
+            logging.warning(f"size of inputs and funds does not match should be {len(funds)}")
             return None
         threshold = inputs[np.argsort(inputs)[-max_number]]
         inputs = [i if i >= threshold else 0 for i in inputs]
@@ -105,7 +103,7 @@ class Market_Env():
             fund = self.funds[batch_id]
             risk_type = self.get_fund_risk_type(fund)
             equity_weight_sum += (weight if risk_type=='Equity' else 0)
-        print(f'equity_weight_sum:{equity_weight_sum}')
+        logging.debug(f'equity_weight_sum:{equity_weight_sum}')
         if(equity_weight_sum>self.equity_limit):
             pass
         profilio =[]
