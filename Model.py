@@ -114,8 +114,9 @@ class Market_Env():
         if(len(inputs)!=len(funds)+1):
             logging.warning(f"size of inputs and funds does not match should be {len(funds)+1}")
             return None
-        inputs = inputs + 0.5+ 0.001*np.random.rand(len(funds)+1)
+
         inputs = inputs *(1+ 0.01*np.random.rand(len(funds)+1))
+        inputs = inputs + 0.5+ 0.001*np.random.rand(len(funds)+1)
         #print(inputs)        
         threshold = inputs[np.argsort(inputs[:-1])[-max_fund_count]]
 
