@@ -122,7 +122,7 @@ class Market_Env():
 
         weights = [i if i >= threshold else 0 for i in inputs[:-1]]
         if(sum(weights)==0):
-            print(f"weights sum is zero {weights},{threshold},{inputs}")
+            print(f"weights sum is zero !!!!")
             print(f"inputs {inputs}")
             print(f"weights {weights}")
             print(f"threshold{threshold}")
