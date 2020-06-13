@@ -7,9 +7,9 @@ import random
 from Model import Market_Env
 import torch
 
-fund_return_src = r'.\data\Monthly_Fund_Return_Selected.csv'
-feature_src = r'.\data\Feature.csv'
-fund_map_src =r'.\data\FUND_MAP_SELECTED.csv'
+fund_return_src = r'./data/Monthly_Fund_Return_Selected.csv'
+feature_src = r'./data/Feature.csv'
+fund_map_src =r'./data/FUND_MAP_SELECTED.csv'
 env = Market_Env(feature_src,fund_map_src,fund_return_src)
 
 def eval_policy(policy, eval_episodes=10):
