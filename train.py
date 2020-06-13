@@ -6,11 +6,18 @@ import numpy as np
 import random
 from Model import Market_Env
 import torch
+import argparse
 
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--policy", default="TD3")   
+args = parser.parse_args()
 fund_return_src = r'./data/Monthly_Fund_Return_Selected.csv'
 feature_src = r'./data/FEATURE.csv'
 fund_map_src =r'./data/FUND_MAP_SELECTED.csv'
 env = Market_Env(feature_src,fund_map_src,fund_return_src)
+
+
 
 def eval_policy(policy, eval_episodes=10):
     #eval_env = Market_Env(feature_src,fund_map_src,fund_return_src)
@@ -28,7 +35,7 @@ def eval_policy(policy, eval_episodes=10):
     print("---------------------------------------")
     return avg_reward
 
-
+parser.add_argument("--env", default="HalfCheetah-v2") 
 
 
 env =Market_Env(feature_src,fund_map_src,fund_return_src)
@@ -56,7 +63,7 @@ noise_clip = 0.5
 policy_freq =2
 max_timesteps = 1e5
 expl_noise =0.1
-policy_name = "TD3"
+policy_name = args.policy
 batch_size = 256
 eval_freq=600
 
@@ -66,8 +73,8 @@ if (policy_name=="TD3"):
     kwargs["policy_freq"] = policy_freq
     policy = TD3.TD3(**kwargs)
 elif(policy_name=="DDPG"):
-    policy = DDPG.DDPG(**kwargs)
-
+    policy = OurDDPG.DDPG(**kwargs)
+   
 evaluations = [eval_policy(policy)]
 
 state, done = env.reset(), False
