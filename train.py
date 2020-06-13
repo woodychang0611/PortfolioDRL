@@ -81,7 +81,7 @@ state, done = env.reset(), False
 episode_reward = 0
 episode_timesteps = 0
 episode_num = 0
-
+episode_rewards=[]
 for t in range(int(max_timesteps)):
     episode_timesteps += 1
 
@@ -107,6 +107,7 @@ for t in range(int(max_timesteps)):
     if done: 
         # +1 to account for 0 indexing. +0 on ep_timesteps since it will increment +1 even if done=True
         print(f"Total T: {t+1} Episode Num: {episode_num+1} Episode T: {episode_timesteps} Reward: {episode_reward:.3f}")
+        episode_rewards.append(episode_reward)
         # Reset environment
         state, done = env.reset(), False
         episode_reward = 0
@@ -119,6 +120,7 @@ for t in range(int(max_timesteps)):
     if (t + 1) % eval_freq == 0:
         evaluations.append(eval_policy(policy))
         env.reset()
-        np.save(f"./results/{file_name}", evaluations)
+        np.save(f"./results/{file_name}_evaluations", evaluations)
+        np.save(f"./results/{file_name}_episode_rewards",episode_rewards)
         policy.save(f"./models/{file_name}")
         policy.save(f"./models/{file_name_latest}")
