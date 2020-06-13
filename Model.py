@@ -115,6 +115,8 @@ class Market_Env():
             logging.warning(f"size of inputs and funds does not match should be {len(funds)+1}")
             return None
         rand_list = 0.001*np.random.rand(len(inputs))
+        #replace NaN = 0
+        inputs = [0 if np.isnan(i) else i for i in inputs]
         inputs = inputs *(1+ rand_list)
         inputs = inputs + 0.5+ rand_list
         #print(inputs)        
