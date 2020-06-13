@@ -115,8 +115,10 @@ for t in range(int(max_timesteps)):
 
     # Evaluate episode
     file_name = f'{policy_name}_{t+1}'
+    file_name_latest = f'{policy_name}_latest'
     if (t + 1) % eval_freq == 0:
         evaluations.append(eval_policy(policy))
         env.reset()
         np.save(f"./results/{file_name}", evaluations)
         policy.save(f"./models/{file_name}")
+        policy.save(f"./models/{file_name_latest}")
