@@ -146,9 +146,11 @@ class Market_Env():
     def reset(self,validation=True):
         state=0
         self.episode=0
+        state = np.zeros(self.state_dim)
         return state
     def step(self,action):   
-        state, reward, done=0,0,0
+        reward, done=0,False
+        state = np.zeros(self.state_dim)
         self.episode+=1
         done = True if (self.episode>=self.episode_limit) else False
             

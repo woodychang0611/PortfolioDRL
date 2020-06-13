@@ -3,6 +3,8 @@ from Model import Market,Market_Env,Market
 from Model import profilios_to_csv
 import logging
 
+print(np.array(10))
+exit(0)
 
 a = range(10)
 print(list(a))

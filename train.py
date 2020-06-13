@@ -9,7 +9,7 @@ import torch
 
 
 
-def eval_policy(policy, env_name, seed, eval_episodes=10):
+def eval_policy(policy, eval_episodes=10):
     eval_env = Market_Env(feature_src,fund_map_src)
     avg_reward = 0
     for _ in range(eval_episodes):
@@ -44,5 +44,27 @@ np.random.seed(rand_seed)
 state_dim = env.state_dim
 action_dim = env.action_dim
 max_action = env.max_action
+kwargs = {
+    "state_dim": state_dim,
+    "action_dim": action_dim,
+    "max_action": max_action,
+    "discount":0.99,
+    "tau": 0.005,
+}
 
 replay_buffer = utils.ReplayBuffer(state_dim, action_dim)
+policy_noise =0.2
+noise_clip = 0.5
+policy_freq =2
+
+policy_name = "TD3"
+
+if (policy_name=="TD3"):
+    kwargs["policy_noise"] = policy_noise * max_action
+    kwargs["noise_clip"] = noise_clip * max_action
+    kwargs["policy_freq"] = policy_freq
+    policy = TD3.TD3(**kwargs)
+elif(policy=="DDPG"):
+    policy = DDPG.DDPG(**kwargs)
+
+eval_policy(policy)
