@@ -115,14 +115,17 @@ class Market_Env():
             logging.warning(f"size of inputs and funds does not match should be {len(funds)+1}")
             return None
 
-        inputs = inputs *(1+ 0.01*np.random.rand(len(funds)+1))
-        inputs = inputs + 0.5+ 0.001*np.random.rand(len(funds)+1)
+        inputs = inputs *(1+ 0.01*np.random.rand(len(inputs)))
+        inputs = inputs + 0.5+ 0.001*np.random.rand(len(inputs))
         #print(inputs)        
         threshold = inputs[np.argsort(inputs[:-1])[-max_fund_count]]
 
         weights = [i if i >= threshold else 0 for i in inputs[:-1]]
         if(sum(weights)==0):
-            print(f"weights sum is zero {weights}")
+            print(f"weights sum is zero {weights},{threshold},{inputs}")
+            print(f"inputs {inputs}")
+            print(f"weights {weights}")
+            print(f"threshold{threshold}")
             weights = np.random.rand(len(funds))
         weights = weights/sum(weights)
         weights = self.adjust_weight(weights)
