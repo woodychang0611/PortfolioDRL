@@ -107,7 +107,7 @@ for t in range(int(max_timesteps)):
         episode_num += 1 
 
     # Evaluate episode
-    file_name = f'{t+1}'
+    file_name = f'{policy_name}_{t+1}'
     if (t + 1) % eval_freq == 0:
         evaluations.append(eval_policy(policy))
         env.reset()
