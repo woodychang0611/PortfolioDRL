@@ -25,6 +25,15 @@ def maxdrawdown(x,display=False):
 def get_cagr(profits):
     return math.pow(1+acc_return(profits)[-1],12.0/len(profits))-1
 
+def get_score(cagr,mdd):
+    if (mdd > 0.2):
+        b=3
+    elif (mdd>0.1):
+        b=2
+    else:
+        b=1
+    return cagr/b
+
 def profilios_to_csv(profilios,start_year,start_month,file):
     ids,data = np.unique([item[0] for sublist in profilios for item in sublist]),{}
     data['DAYM']=[]
@@ -79,48 +88,70 @@ class Market:
         return cagr,mdd,transfer_count
 
 class Market_Env():
-    def __init__ (self,feature_src,fund_map_src,equity_limit=0.1):
+    def __init__ (self,feature_src,fund_map_src,equity_limit=0.75,episode_limit=30):
         self.feature_data = pd.read_csv(feature_src)
         fund_map_src
         self.fund_map = pd.read_csv(fund_map_src)
         self.funds = self.fund_map['ISINCODE'].values
         self.state_dim =self.feature_data.shape[1]
         self.max_action = 0.5
-        self.action_dim = len(self.funds)
+        self.action_dim = len(self.funds)+1 #one more action for risk off
         self.equity_limit=equity_limit
-        logging.info(f'model par: {self.state_dim} {self.action_dim}')
+        self.episode_limit=episode_limit
+        logging.info(f'model par: state:{self.state_dim} action:{self.action_dim}')
     def create_profilio(self,inputs,max_number):
         funds = self.funds
-        if(len(inputs)!=len(funds)):
-            logging.warning(f"size of inputs and funds does not match should be {len(funds)}")
+        if(len(inputs)!=len(funds)+1):
+            logging.warning(f"size of inputs and funds does not match should be {len(funds)+1}")
             return None
-        threshold = inputs[np.argsort(inputs)[-max_number]]
-        inputs = [i if i >= threshold else 0 for i in inputs]
-        weights = inputs/sum(inputs)
-        
-        equity_weight_sum = 0
-        for batch_id, weight in enumerate(weights):
-            fund = self.funds[batch_id]
-            risk_type = self.get_fund_risk_type(fund)
-            equity_weight_sum += (weight if risk_type=='Equity' else 0)
-        logging.debug(f'equity_weight_sum:{equity_weight_sum}')
-        if(equity_weight_sum>self.equity_limit):
-            pass
+        threshold = inputs[np.argsort(inputs[:-1])[-max_number]]
+        weights = [i if i >= threshold else 0 for i in inputs[:-1]]
+        weights = weights/sum(weights)
+        weights = self.adjust_weight(weights)
+       
         profilio =[]
         for batch_id, weight in enumerate(weights):
             if(not np.isclose(weight,0)):
                 profilio.append((self.funds[batch_id],weight))
         return profilio
 
+    def adjust_weight(self,weights):
+        #adjust equity to be under equity_limit
+        equity_sum = 0
+        for batch_id, weight in enumerate(weights):
+            fund = self.funds[batch_id]
+            risk_type = self.get_fund_risk_type(fund)
+            equity_sum += (weight if risk_type=='Equity' else 0)
+        logging.debug(f'equity_weight_sum:{equity_sum}')
+        if(equity_sum>self.equity_limit):
+            ratio = (self.equity_limit-equity_sum*self.equity_limit) / (equity_sum-equity_sum*self.equity_limit)
+            for batch_id, _ in enumerate(weights):
+                fund = self.funds[batch_id]
+                risk_type = self.get_fund_risk_type(fund)
+                if risk_type=='Equity':
+                    weights[batch_id] = weights[batch_id]*ratio
+            weights = weights/sum(weights)
+            equity_sum=0
+            for batch_id, weight in enumerate(weights):
+                fund = self.funds[batch_id]
+                risk_type = self.get_fund_risk_type(fund)
+                equity_sum += (weight if risk_type=='Equity' else 0)
+            logging.debug(f'equity_weight_sum after adjust:{equity_sum}') 
+        return weights
     def get_fund_risk_type(self,fund):
         return self.fund_map[self.fund_map['ISINCODE']==fund]['RISKTYPENAME'].values[0]
+    
     def seed(self,seed):
         pass
-    def reset(self):
+    def reset(self,validation=True):
         state=0
+        self.episode=0
         return state
     def step(self,action):   
         state, reward, done=0,0,0
+        self.episode+=1
+        done = True if (self.episode>=self.episode_limit) else False
+            
         return state, reward, done
 
 

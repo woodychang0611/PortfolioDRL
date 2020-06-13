@@ -3,6 +3,12 @@ from Model import Market,Market_Env,Market
 from Model import profilios_to_csv
 import logging
 
+
+a = range(10)
+print(list(a))
+a = np.array(a[:-1]) + 100
+print(list(a))
+
 logging.basicConfig(level=logging.DEBUG)
 
 logging.info('test')
@@ -15,7 +21,7 @@ market =Market(data_src =fund_return_src)
 env = Market_Env(feature_src,fund_map_src)
 profilios=[]
 for i in range(6):
-    inputs = np.random.rand(len(env.funds)) 
+    inputs = np.random.rand(env.action_dim)
     profilo = env.create_profilio(inputs,6)
     #print(profilo)
     profilios.append(profilo)
