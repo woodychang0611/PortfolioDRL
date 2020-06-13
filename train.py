@@ -65,7 +65,7 @@ max_timesteps = 1e5
 expl_noise =0.1
 policy_name = args.policy
 batch_size = 256
-eval_freq=6000
+eval_freq=1500
 
 if (policy_name=="TD3"):
     kwargs["policy_noise"] = policy_noise * max_action
