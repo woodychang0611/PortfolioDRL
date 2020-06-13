@@ -122,6 +122,7 @@ class Market_Env():
         weights = [i if i >= threshold else 0 for i in inputs[:-1]]
         if(sum(weights)==0):
             print("!!!!!!!!!!!!!!!!!!!!")
+            weights = np.random.rand(len(funds))
         weights = weights/sum(weights)
         weights = self.adjust_weight(weights)
        
