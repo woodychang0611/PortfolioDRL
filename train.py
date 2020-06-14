@@ -58,8 +58,8 @@ kwargs = {
 }
 
 replay_buffer = utils.ReplayBuffer(state_dim, action_dim)
-policy_noise =0.2
-noise_clip = 0.5
+policy_noise =0.02
+noise_clip = 0.05
 policy_freq =2
 max_timesteps = 1e5
 expl_noise =0.1
