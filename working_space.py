@@ -3,11 +3,6 @@ from Model import Market_Env,FundData
 from Model import profilios_to_csv
 import logging
 
-a = range(10)
-print(list(a))
-a = np.array(a[:-1]) + 100
-print(list(a))
-
 logging.basicConfig(level=logging.DEBUG)
 
 logging.info('test')
@@ -25,4 +20,11 @@ for i in range(6):
 
 cagr,mdd,transfer_count = env.fund_data.profilios_return(profilios,2015,1)
 #print (f'cagr:{cagr},mdd:{mdd},transfer_count:{transfer_count}')
-profilios_to_csv(profilios,2012,10,r'.\Temp\test3.csv')
+#profilios_to_csv(profilios,2012,10,r'.\Temp\test3.csv')
+
+data = env.feature_data
+dfMax = data.max(axis=0)
+dfMin = data.min(axis=0)
+#data = data.divide(dfMax, axis=1)
+print(env.feature_data)
+print(data[1])
