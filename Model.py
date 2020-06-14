@@ -27,12 +27,8 @@ def get_cagr(profits):
     return math.pow(1+acc_return(profits)[-1],12.0/len(profits))-1
 
 def get_score(cagr,mdd):
-    if (mdd > 0.2):
-        b=3
-    elif (mdd>0.1):
-        b=2
-    else:
-        b=1
+    #use double sigmoid
+    b= 1+1/(1+np.exp(-(mdd-0.15)*500))+1/(1+np.exp(-(mdd-0.2)*500))
     return cagr/b
 
 def profilios_to_csv(profilios,start_year,start_month,file):
