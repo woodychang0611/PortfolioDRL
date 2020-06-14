@@ -28,8 +28,8 @@ def get_cagr(profits):
 
 def get_score(cagr,mdd):
     #use double sigmoid
-    b= 1+1/(1+np.exp(-(mdd-0.15)*500))+1/(1+np.exp(-(mdd-0.2)*500))
-    return cagr/b
+    b= 1+1/(1+np.exp(-(mdd-0.15)*200))+1/(1+np.exp(-(mdd-0.2)*200))
+    return 100*cagr/b
 
 def profilios_to_csv(profilios,start_year,start_month,file):
     ids,data = np.unique([item[0] for sublist in profilios for item in sublist]),{}
