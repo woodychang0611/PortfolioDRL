@@ -89,7 +89,7 @@ class Market_Env():
         self.fund_map = pd.read_csv(fund_map_src)
         self.funds = self.fund_map['ISINCODE'].values
         self.state_dim =self.feature_data.shape[1]-1 #skip Date
-        self.max_action = 0.5
+        self.max_action = 1
         self.action_dim = len(self.funds)+1 #one more action for risk off
         self.equity_limit=equity_limit
         self.episode_limit=episode_limit
@@ -114,7 +114,7 @@ class Market_Env():
         #replace NaN = 0
         #inputs = [0 if np.isnan(i) else i for i in inputs]
         inputs = inputs *(1+ rand_list)
-        inputs = inputs + 0.5+ rand_list
+        inputs = inputs + 1 + rand_list
         #print(inputs)        
         threshold = inputs[np.argsort(inputs[:-1])[-max_fund_count]]
 
