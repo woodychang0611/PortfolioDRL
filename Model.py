@@ -31,15 +31,15 @@ def get_score(cagr,mdd):
     b= 1+1/(1+np.exp(-(mdd-0.15)*200))+1/(1+np.exp(-(mdd-0.2)*200))
     return 100*cagr/b
 
-def profilios_to_csv(profilios,start_year,start_month,file):
-    ids,data = np.unique([item[0] for sublist in profilios for item in sublist]),{}
+def portfolios_to_csv(portfolios,start_year,start_month,file):
+    ids,data = np.unique([item[0] for sublist in portfolios for item in sublist]),{}
     data['DAYM']=[]
     year,month = start_year,start_month
     for id in ids:
         data[id]=[]
-        for profilio in profilios:
-            data[id].append(next(iter([i[1] for i in profilio if i[0]==id]),'NA'))
-    for profilio in profilios:
+        for portfolio in portfolios:
+            data[id].append(next(iter([i[1] for i in portfolio if i[0]==id]),'NA'))
+    for portfolio in portfolios:
         data['DAYM'].append(datetime.datetime(year,month,1))
         year,month = next_year(year,month)
     pd.DataFrame(data=data).to_csv(file,index=False)
@@ -64,7 +64,7 @@ class FundData:
             return ret[0] if(len(ret)==1 and not np.isnan(ret[0])) else 0        
         except:
             return 0
-    def profilios_return(self,portfolios,start_year,start_month):
+    def portfolios_return(self,portfolios,start_year,start_month):
         profits = []
         year,month = start_year,start_month
         for portfolio in portfolios:
@@ -104,7 +104,7 @@ class Market_Env():
     def done(self):
         return True if (self.episode>=self.episode_limit) else False 
             
-    def create_profilio(self,inputs,max_fund_count=6):
+    def create_portfolio(self,inputs,max_fund_count=6):
 
         funds = self.funds
         if(len(inputs)!=len(funds)+1):
@@ -129,11 +129,11 @@ class Market_Env():
         weights = weights/sum(weights)
         weights = self.adjust_weight(weights)
        
-        profilio =[]
+        portfolio =[]
         for batch_id, weight in enumerate(weights):
             if(not np.isclose(weight,0)):
-                profilio.append((self.funds[batch_id],weight))
-        return profilio
+                portfolio.append((self.funds[batch_id],weight))
+        return portfolio
   
     def adjust_weight(self,weights):
         #adjust equity to be under equity_limit
@@ -167,15 +167,15 @@ class Market_Env():
         self.episode=0
         self.start_year, self.start_month = (2014,7) if (validation) else (randint(1998,2011), randint(1,12))
         self.year,self.month = self.start_year, self.start_month 
-        self.profilios=[]
+        self.portfolios=[]
         self.score =0
         return self.state
     def step(self,action):   
         reward=0
-        profilio = self.create_profilio(action)
-        self.profilios.append(profilio)
+        portfolio = self.create_portfolio(action)
+        self.portfolios.append(portfolio)
         old_score = self.score
-        cagr,mdd,_ = self.fund_data.profilios_return(self.profilios,self.start_year,self.start_month)
+        cagr,mdd,_ = self.fund_data.portfolios_return(self.portfolios,self.start_year,self.start_month)
         self.score = get_score(cagr,mdd)
         reward= self.score - old_score
         if(not self.done):
